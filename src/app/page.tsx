@@ -1351,12 +1351,12 @@ export default function DamascusPlayground() {
 
         <div className="mb-4">
           <a
-            href="https://www.buymeacoffee.com/your-handle"
+            href="https://buymeacoffee.com/gerritjohansen"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 border border-amber-700 text-amber-300"
           >
-            Buy me a coffee:) (it helps!) ☕
+            Buy me a coffee:) (for the forge!) ☕
           </a>
         </div>
 
