@@ -1329,12 +1329,6 @@ export default function DamascusPlayground() {
           </div>
         </section>
 
-        {/* Ad slot card */}
-        <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl min-h-[200px]">
-          <div className="text-sm text-neutral-400">Advertisement:</div>
-        </div>
-      </div>
-
       {/* Footer component */}
       <footer className="text-center text-xs text-neutral-400 py-8 border-t border-neutral-800 bg-neutral-900 mt-8">
         <div className="space-y-1 mb-3">
