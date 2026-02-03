@@ -523,7 +523,19 @@ function Knob({
 // ===================== Materials (Steel) Picker =====================
 function MaterialPalette({ onAddSheets }: { onAddSheets: (m: MaterialType, count: number) => void }) {
   const [selectedMat, setSelectedMat] = useState<MaterialType>('1084')
-  const [count, setCount] = useState(5)
+  const [countText, setCountText] = useState('5')
+
+  const clampCount = (raw: string) => {
+    const n = Number(raw)
+    if (!Number.isFinite(n)) return 1
+    return Math.max(1, Math.min(500, Math.floor(n)))
+  }
+
+  const commitCount = () => {
+    setCountText(String(clampCount(countText)))
+  }
+
+  const count = clampCount(countText)
   const all = Object.keys(MATERIAL_CATALOG) as MaterialType[]
 
   return (
@@ -536,30 +548,28 @@ function MaterialPalette({ onAddSheets }: { onAddSheets: (m: MaterialType, count
           onChange={(e) => setSelectedMat(e.target.value as MaterialType)}
         >
           {all.map((m) => (
-            <option key={m} value={m}>
-              {MATERIAL_CATALOG[m].name}
-            </option>
+            <option key={m} value={m}>{MATERIAL_CATALOG[m].name}</option>
           ))}
         </select>
+
         <label className="text-xs text-neutral-400 ml-2">Count</label>
         <input
-          type="number"
-          min={1}
-          max={500}
-          value={count}
-          onChange={(e) => setCount(Math.max(1, Math.min(500, Number(e.target.value))))}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={countText}
+          onChange={(e) => setCountText(e.target.value)}
+          onBlur={commitCount}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
+          }}
           className="w-16 bg-neutral-700 rounded px-2 py-1"
         />
+
         <div className="flex flex-wrap gap-1 ml-1">
-          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 1)}>
-            +1
-          </button>
-          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 5)}>
-            +5
-          </button>
-          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 10)}>
-            +10
-          </button>
+          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 1)}>+1</button>
+          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 5)}>+5</button>
+          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 10)}>+10</button>
           <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, count)}>
             Add ×{count}
           </button>
@@ -568,6 +578,7 @@ function MaterialPalette({ onAddSheets }: { onAddSheets: (m: MaterialType, count
     </div>
   )
 }
+
 
 // ===================== Operation Bubble (fully wired) =====================
 type BubbleProps = {
@@ -613,15 +624,33 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
     <div className="flex items-center gap-3">{children}</div>
   )
   const Num = ({ value, onChange, min, max, step = 1 }: {
-    value: number; onChange: (v: number) => void; min: number; max: number; step?: number
-  }) => (
+  value: number; onChange: (v: number) => void; min: number; max: number; step?: number
+}) => {
+  const [text, setText] = useState(String(value))
+
+  useEffect(() => {
+    setText(String(value))
+  }, [value])
+
+  const commit = () => {
+    const n = Number(text)
+    const safe = Number.isFinite(n) ? n : value
+    const clamped = Math.max(min, Math.min(max, safe))
+    const snapped = Math.round(clamped / step) * step
+    onChange(snapped)
+    setText(String(snapped))
+  }
+
+  return (
     <input
-      type="number"
-      value={value}
-      min={min}
-      max={max}
-      step={step}
-      onChange={e => onChange(Number(e.target.value))}
+      type="text"
+      inputMode="decimal"
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
+      }}
       className="w-24 bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm"
     />
   )
@@ -1260,7 +1289,10 @@ export default function DamascusPlayground() {
             </div>
           </div>
           <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl">
-            <h3 className="text-lg font-semibold mb-2">Pattern Preview (Etch)</h3>
+            <h3 className="text-lg font-semibold mb-1">Billet structure preview</h3>
+            <p className="text-sm text-neutral-400 mb-3">
+               This shows internal layer structure before grinding and etching. Final pattern will differ.
+            </p>
             <div className="flex flex-col gap-6 items-center">
               {layers.length ? (
                 <img
