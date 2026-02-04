@@ -536,24 +536,26 @@ function MaterialPalette({ onAddSheets }: { onAddSheets: (m: MaterialType, count
   }
 
   const count = clampCount(countText)
-  const all = Object.keys(MATERIAL_CATALOG) as MaterialType[]
+  const all = Object.keys(MATERIAL_CATALOG) as (keyof typeof MATERIAL_CATALOG)[]
 
   return (
     <div className="flex flex-wrap gap-3 items-center">
       <div className="flex flex-wrap items-center gap-2 bg-neutral-800 rounded-lg px-2 py-1">
-        <label className="text-xs text-neutral-400">Steel</label>
+        <label htmlFor="material-select" className="text-xs text-neutral-400">Steel</label>
         <select
+          id="material-select"
           className="bg-neutral-800 outline-none min-w-[120px]"
           value={selectedMat}
           onChange={(e) => setSelectedMat(e.target.value as MaterialType)}
         >
           {all.map((m) => (
-            <option key={m} value={m}>{MATERIAL_CATALOG[m].name}</option>
+            <option key={m} value={m}>{MATERIAL_CATALOG[m as MaterialType].name}</option>
           ))}
         </select>
 
-        <label className="text-xs text-neutral-400 ml-2">Count</label>
+        <label htmlFor="count-input" className="text-xs text-neutral-400 ml-2">Count</label>
         <input
+          id="count-input"
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
@@ -567,10 +569,10 @@ function MaterialPalette({ onAddSheets }: { onAddSheets: (m: MaterialType, count
         />
 
         <div className="flex flex-wrap gap-1 ml-1">
-          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 1)}>+1</button>
-          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 5)}>+5</button>
-          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 10)}>+10</button>
-          <button className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, count)}>
+          <button aria-label={`Add 1 sheet of ${MATERIAL_CATALOG[selectedMat].name}`} className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 1)}>+1</button>
+          <button aria-label={`Add 5 sheets of ${MATERIAL_CATALOG[selectedMat].name}`} className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 5)}>+5</button>
+          <button aria-label={`Add 10 sheets of ${MATERIAL_CATALOG[selectedMat].name}`} className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 10)}>+10</button>
+          <button aria-label={`Add ${count} sheets of ${MATERIAL_CATALOG[selectedMat].name}`} className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, count)}>
             Add ×{count}
           </button>
         </div>
@@ -633,10 +635,24 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
   }, [value])
 
   const commit = () => {
+    if (text.trim() === '') {
+      setText(String(value))
+      return
+    }
     const n = Number(text)
-    const safe = Number.isFinite(n) ? n : value
-    const clamped = Math.max(min, Math.min(max, safe))
-    const snapped = Math.round(clamped / step) * step
+    if (!Number.isFinite(n)) {
+      setText(String(value))
+      return
+    }
+
+    const clamped = Math.max(min, Math.min(max, n))
+    const rawSnapped = Math.round(clamped / step) * step
+
+    // Determine decimal precision from step (handles fractional steps reliably)
+    const stepStr = String(step)
+    const precision = stepStr.includes('.') ? stepStr.split('.')[1].length : 0
+    const snapped = Number(rawSnapped.toFixed(precision))
+
     onChange(snapped)
     setText(String(snapped))
   }
