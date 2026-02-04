@@ -1398,6 +1398,7 @@ export default function DamascusPlayground() {
             </div>
           </div>
         </section>
+      </div> {/* closes max-w-screen-2xl container */}
 
       {/* Footer component */}
       <footer className="text-center text-xs text-neutral-400 py-8 border-t border-neutral-800 bg-neutral-900 mt-8">
