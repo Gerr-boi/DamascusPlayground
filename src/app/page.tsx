@@ -670,6 +670,7 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
       className="w-24 bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-sm"
     />
   )
+  }
   const Slider = ({ value, onChange, min, max, step = 0.01 }: {
     value: number; onChange: (v: number) => void; min: number; max: number; step?: number
   }) => (
@@ -737,26 +738,26 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
                 label="Twist"
                 value={Math.round(op.turns * 360)}
                 min={0} max={720} step={10} unit="°"
-                onChange={(deg) => setOp({ ...op, turns: Math.max(0, Math.min(2, deg / 360)) })}
+                onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(2, deg / 360)) } as Operation))}
               />
               <div className="flex-1">
                 <Slider min={0} max={720} step={1}
                   value={Math.round(op.turns * 360)}
-                  onChange={(deg) => setOp({ ...op, turns: Math.max(0, Math.min(2, Number(deg) / 360)) })}
+                  onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(2, Number(deg) / 360)) } as Operation))}
                 />
                 <div className="mt-2">
                   <Num min={0} max={720} step={10}
                     value={Math.round(op.turns * 360)}
-                    onChange={(deg) => setOp({ ...op, turns: Math.max(0, Math.min(2, deg / 360)) })}
+                    onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(2, deg / 360)) } as Operation))}
                   /> <span className="ml-1 text-neutral-400">({op.turns.toFixed(2)} turns)</span>
                 </div>
               </div>
             </Row>
             <div className="flex gap-2 flex-wrap">
-              <Preset label="¼ turn" apply={() => setOp({ ...op, turns: 0.25 })} />
-              <Preset label="½ turn" apply={() => setOp({ ...op, turns: 0.5 })} />
-              <Preset label="1 turn" apply={() => setOp({ ...op, turns: 1 })} />
-              <Preset label="2 turns" apply={() => setOp({ ...op, turns: 2 })} />
+              <Preset label="¼ turn" apply={() => setOp((prev) => ({ ...prev, turns: 0.25 } as Operation))} />
+              <Preset label="½ turn" apply={() => setOp((prev) => ({ ...prev, turns: 0.5 } as Operation))} />
+              <Preset label="1 turn" apply={() => setOp((prev) => ({ ...prev, turns: 1 } as Operation))} />
+              <Preset label="2 turns" apply={() => setOp((prev) => ({ ...prev, turns: 2 } as Operation))} />
             </div>
           </>
         )}
@@ -766,21 +767,21 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
             <Label>Spacing</Label>
             <Row>
               <Slider min={0.02} max={0.3} step={0.01} value={op.spacing}
-                onChange={(v) => setOp({ ...op, spacing: v as number })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, spacing: v as number } as Operation))} />
               <Num min={0.02} max={0.3} step={0.01} value={op.spacing}
-                onChange={(v) => setOp({ ...op, spacing: v })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, spacing: v } as Operation))} />
             </Row>
             <Label>Depth</Label>
             <Row>
               <Slider min={0} max={1} step={0.01} value={op.depth}
-                onChange={(v) => setOp({ ...op, depth: v as number })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, depth: v as number } as Operation))} />
               <Num min={0} max={1} step={0.01} value={op.depth}
-                onChange={(v) => setOp({ ...op, depth: v })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, depth: v } as Operation))} />
             </Row>
             <div className="flex gap-2 flex-wrap">
-              <Preset label="Tight/Shallow" apply={() => setOp({ ...op, spacing: 0.06, depth: 0.25 })} />
-              <Preset label="Medium" apply={() => setOp({ ...op, spacing: 0.10, depth: 0.5 })} />
-              <Preset label="Wide/Deep" apply={() => setOp({ ...op, spacing: 0.18, depth: 0.8 })} />
+              <Preset label="Tight/Shallow" apply={() => setOp((prev) => ({ ...prev, spacing: 0.06, depth: 0.25 } as Operation))} />
+              <Preset label="Medium" apply={() => setOp((prev) => ({ ...prev, spacing: 0.10, depth: 0.5 } as Operation))} />
+              <Preset label="Wide/Deep" apply={() => setOp((prev) => ({ ...prev, spacing: 0.18, depth: 0.8 } as Operation))} />
             </div>
           </>
         )}
@@ -790,21 +791,21 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
             <Label>Radius</Label>
             <Row>
               <Slider min={0.01} max={0.2} step={0.005} value={op.radius}
-                onChange={(v) => setOp({ ...op, radius: v as number })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, radius: v as number } as Operation))} />
               <Num min={0.01} max={0.2} step={0.005} value={op.radius}
-                onChange={(v) => setOp({ ...op, radius: v })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, radius: v } as Operation))} />
             </Row>
             <Label>Spacing</Label>
             <Row>
               <Slider min={0.05} max={0.3} step={0.005} value={op.spacing}
-                onChange={(v) => setOp({ ...op, spacing: v as number })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, spacing: v as number } as Operation))} />
               <Num min={0.05} max={0.3} step={0.005} value={op.spacing}
-                onChange={(v) => setOp({ ...op, spacing: v })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, spacing: v } as Operation))} />
             </Row>
             <div className="flex gap-2 flex-wrap">
-              <Preset label="Fine" apply={() => setOp({ ...op, radius: 0.03, spacing: 0.10 })} />
-              <Preset label="Medium" apply={() => setOp({ ...op, radius: 0.06, spacing: 0.14 })} />
-              <Preset label="Bold" apply={() => setOp({ ...op, radius: 0.10, spacing: 0.18 })} />
+              <Preset label="Fine" apply={() => setOp((prev) => ({ ...prev, radius: 0.03, spacing: 0.10 } as Operation))} />
+              <Preset label="Medium" apply={() => setOp((prev) => ({ ...prev, radius: 0.06, spacing: 0.14 } as Operation))} />
+              <Preset label="Bold" apply={() => setOp((prev) => ({ ...prev, radius: 0.10, spacing: 0.18 } as Operation))} />
             </div>
           </>
         )}
@@ -814,14 +815,14 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
             <Label>Folds</Label>
             <Row>
               <Slider min={2} max={12} step={1} value={op.folds}
-                onChange={(v) => setOp({ ...op, folds: v as number })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, folds: v as number } as Operation))} />
               <Num min={2} max={12} step={1} value={op.folds}
-                onChange={(v) => setOp({ ...op, folds: v })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, folds: v } as Operation))} />
             </Row>
             <div className="flex gap-2 flex-wrap">
-              <Preset label="Seed (6)" apply={() => setOp({ ...op, folds: 6 })} />
-              <Preset label="Bold (8)" apply={() => setOp({ ...op, folds: 8 })} />
-              <Preset label="Fine (10)" apply={() => setOp({ ...op, folds: 10 })} />
+              <Preset label="Seed (6)" apply={() => setOp((prev) => ({ ...prev, folds: 6 } as Operation))} />
+              <Preset label="Bold (8)" apply={() => setOp((prev) => ({ ...prev, folds: 8 } as Operation))} />
+              <Preset label="Fine (10)" apply={() => setOp((prev) => ({ ...prev, folds: 10 } as Operation))} />
             </div>
           </>
         )}
@@ -831,14 +832,14 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
             <Label>Times</Label>
             <Row>
               <Slider min={1} max={5} step={1} value={op.times}
-                onChange={(v) => setOp({ ...op, times: v as number })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, times: v as number } as Operation))} />
               <Num min={1} max={5} step={1} value={op.times}
-                onChange={(v) => setOp({ ...op, times: v })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, times: v } as Operation))} />
             </Row>
             <div className="flex gap-2 flex-wrap">
-              <Preset label="×1 (2× layers)" apply={() => setOp({ ...op, times: 1 })} />
-              <Preset label="×2 (4×)" apply={() => setOp({ ...op, times: 2 })} />
-              <Preset label="×3 (8×)" apply={() => setOp({ ...op, times: 3 })} />
+              <Preset label="×1 (2× layers)" apply={() => setOp((prev) => ({ ...prev, times: 1 } as Operation))} />
+              <Preset label="×2 (4×)" apply={() => setOp((prev) => ({ ...prev, times: 2 } as Operation))} />
+              <Preset label="×3 (8×)" apply={() => setOp((prev) => ({ ...prev, times: 3 } as Operation))} />
             </div>
           </>
         )}
@@ -848,14 +849,14 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
             <Label>Factor</Label>
             <Row>
               <Slider min={0.5} max={4} step={0.01} value={op.factor}
-                onChange={(v) => setOp({ ...op, factor: v as number })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, factor: v as number } as Operation))} />
               <Num min={0.5} max={4} step={0.01} value={op.factor}
-                onChange={(v) => setOp({ ...op, factor: v })} />
+                onChange={(v) => setOp((prev) => ({ ...prev, factor: v } as Operation))} />
             </Row>
             <div className="flex gap-2 flex-wrap">
-              <Preset label="Short ×0.8" apply={() => setOp({ ...op, factor: 0.8 })} />
-              <Preset label="Normal ×1.0" apply={() => setOp({ ...op, factor: 1.0 })} />
-              <Preset label="Drawn ×2.0" apply={() => setOp({ ...op, factor: 2.0 })} />
+              <Preset label="Short ×0.8" apply={() => setOp((prev) => ({ ...prev, factor: 0.8 } as Operation))} />
+              <Preset label="Normal ×1.0" apply={() => setOp((prev) => ({ ...prev, factor: 1.0 } as Operation))} />
+              <Preset label="Drawn ×2.0" apply={() => setOp((prev) => ({ ...prev, factor: 2.0 } as Operation))} />
             </div>
           </>
         )}
@@ -926,10 +927,31 @@ export default function DamascusPlayground() {
     })
   }
 
-  const patternCanvas = useMemo(() => {
-    if (typeof document === 'undefined') return null as any
-    if (layers.length === 0) return null as any // blank when no layers
-    return generatePattern(layers, ops, 1024, 512)
+  // Debounced pattern generation to avoid heavy CPU on rapid input changes
+  const [patternCanvas, setPatternCanvas] = useState<HTMLCanvasElement | null>(null)
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (layers.length === 0) {
+      setPatternCanvas(null)
+      return
+    }
+
+    let cancelled = false
+    const id = setTimeout(() => {
+      if (cancelled) return
+      try {
+        const canvas = generatePattern(layers, ops, 1024, 512)
+        setPatternCanvas(canvas)
+      } catch (e) {
+        console.error(e)
+      }
+    }, 200) // debounce 200ms
+
+    return () => {
+      cancelled = true
+      clearTimeout(id)
+    }
   }, [layers, ops])
 
   const pushOp = (op: Operation) => commit(null, [...ops, op])
