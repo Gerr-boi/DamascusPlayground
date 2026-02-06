@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import logo from "@/public/public/blacksmith_logo.png"
+import { PATTERN_RECIPES, type PatternRecipe } from '@/data/patternRecipes'
 
 
 // ===================== Types & Materials =====================
@@ -23,6 +24,8 @@ type Operation =
   | { kind: 'wfolds'; folds: number }
   | { kind: 'fold'; times: number }
   | { kind: 'stretch'; factor: number }
+
+export type { MaterialType, Operation }
 
 // Approximate etch brightness 0..1 (higher = lighter after etch)
 const MATERIAL_CATALOG: Record<MaterialType, { name: string; etch: number }> = {
@@ -677,6 +680,38 @@ function MaterialPalette({
 }
 
 
+// ===================== Pattern Recipes Panel =====================
+function PatternRecipesPanel({ onLoad }: { onLoad: (r: PatternRecipe) => void }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full px-4 py-3 flex justify-between items-center text-left"
+      >
+        <span className="font-semibold">Pattern Recipes</span>
+        <span>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="p-4 border-t border-neutral-800 grid md:grid-cols-2 gap-3">
+          {PATTERN_RECIPES.map((r) => (
+            <button
+              key={r.id}
+              onClick={() => onLoad(r)}
+              className="text-left p-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 transition"
+            >
+              <div className="font-semibold">{r.name}</div>
+              <div className="text-sm text-neutral-400">{r.description}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ===================== Operation Bubble (fully wired) =====================
 type BubbleProps = {
   initial: Operation
@@ -1075,6 +1110,20 @@ export default function DamascusPlayground() {
     addAlternating('1084', '15N20', pairs)
   }
 
+  const loadPatternRecipe = (recipe: PatternRecipe) => {
+    const [a, b] = recipe.steels
+
+    const newLayers: MaterialType[] = []
+    for (let i = 0; i < recipe.pairs; i++) {
+      newLayers.push(a, b)
+    }
+
+    setLayers(newLayers)
+    setOps(recipe.ops)
+    setPast([])
+    setFuture([])
+  }
+
   const moveOp = (idx: number, dir: -1 | 1) => {
     const next = ops.slice()
     const ni = idx + dir
@@ -1114,7 +1163,7 @@ export default function DamascusPlayground() {
     URL.revokeObjectURL(url)
   }
 
-  const loadRecipe = (file: File) => {
+  const loadRecipeFromFile = (file: File) => {
     const reader = new FileReader()
     reader.onload = () => {
       try {
@@ -1354,6 +1403,9 @@ export default function DamascusPlayground() {
             )}
           </div>
 
+          {/* Pattern Recipes card */}
+          <PatternRecipesPanel onLoad={loadPatternRecipe} />
+
           {/* Modifiers card */}
           <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl">
             <h2 className="text-xl font-semibold mb-3">Modifiers</h2>
@@ -1484,7 +1536,7 @@ export default function DamascusPlayground() {
                     type="file"
                     accept="application/json"
                     className="hidden"
-                    onChange={(e) => e.target.files && loadRecipe(e.target.files[0])}
+                    onChange={(e) => e.target.files && loadRecipeFromFile(e.target.files[0])}
                   />
                 </label>
                 <button
