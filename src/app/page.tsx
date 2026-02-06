@@ -69,7 +69,16 @@ function generatePattern(
 
       for (const op of ops) {
         if (op.kind === 'twist') {
-          vv += (Math.sin(uu * Math.PI * 2 * op.turns) * 0.5) / Math.max(1, repeats)
+          const TAU = Math.PI * 2
+
+          // Strength tuned so 1–2 turns already show visible distortion,
+          // and higher turns keep getting more intense without going insane.
+          const turns = Math.max(0, op.turns)
+          const layerScale = 1 / Math.max(1, Math.sqrt(repeats)) // less dampening than /repeats
+          const strength = (0.35 + 0.10 * Math.min(10, turns)) * layerScale
+
+          // Helical-ish modulation: depends on both length (uu) and stack (vv)
+          vv += Math.sin(uu * TAU * turns + vv * TAU) * strength
         } else if (op.kind === 'ladder') {
           const t = (uu / Math.max(0.0001, op.spacing)) % 1
           const tri = 1 - Math.abs(0.5 - t) * 2 // 0..1..0
@@ -521,59 +530,145 @@ function Knob({
 }
 
 // ===================== Materials (Steel) Picker =====================
-function MaterialPalette({ onAddSheets }: { onAddSheets: (m: MaterialType, count: number) => void }) {
-  const [selectedMat, setSelectedMat] = useState<MaterialType>('1084')
-  const [countText, setCountText] = useState('5')
+function MaterialPalette({
+  onAddSheets,
+  onAddAlternating,
+}: {
+  onAddSheets: (m: MaterialType, count: number) => void
+  onAddAlternating: (a: MaterialType, b: MaterialType, pairs: number) => void
+}) {
+  const all = Object.keys(MATERIAL_CATALOG) as MaterialType[]
 
-  const clampCount = (raw: string) => {
+  const [steel1, setSteel1] = useState<MaterialType>('1084')
+  const [steel2, setSteel2] = useState<MaterialType>('15N20')
+  const [pairsText, setPairsText] = useState('5')
+
+  const clampPairs = (raw: string) => {
     const n = Number(raw)
     if (!Number.isFinite(n)) return 1
     return Math.max(1, Math.min(500, Math.floor(n)))
   }
+  const pairs = clampPairs(pairsText)
+  const commitPairs = () => setPairsText(String(pairs))
 
-  const commitCount = () => {
-    setCountText(String(clampCount(countText)))
+  const swapSteels = () => {
+    setSteel1(steel2)
+    setSteel2(steel1)
   }
 
-  const count = clampCount(countText)
-  const all = Object.keys(MATERIAL_CATALOG) as (keyof typeof MATERIAL_CATALOG)[]
-
   return (
-    <div className="flex flex-wrap gap-3 items-center">
-      <div className="flex flex-wrap items-center gap-2 bg-neutral-800 rounded-lg px-2 py-1">
-        <label htmlFor="material-select" className="text-xs text-neutral-400">Steel</label>
-        <select
-          id="material-select"
-          className="bg-neutral-800 outline-none min-w-[120px]"
-          value={selectedMat}
-          onChange={(e) => setSelectedMat(e.target.value as MaterialType)}
-        >
-          {all.map((m) => (
-            <option key={m} value={m}>{MATERIAL_CATALOG[m as MaterialType].name}</option>
-          ))}
-        </select>
+    <div className="w-full space-y-3">
+      {/* Two bubbles */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-2 items-stretch">
+        {/* Steel 1 bubble */}
+        <div className="bg-neutral-800/70 border border-neutral-700 rounded-xl p-3 flex items-center gap-3">
+          <div className="text-xs text-neutral-400 w-14">Steel 1</div>
+          <select
+            className="bg-neutral-900/40 border border-neutral-700 rounded-lg px-3 py-2 w-full outline-none"
+            value={steel1}
+            onChange={(e) => setSteel1(e.target.value as MaterialType)}
+          >
+            {all.map((m) => (
+              <option key={m} value={m}>
+                {MATERIAL_CATALOG[m].name}
+              </option>
+            ))}
+          </select>
 
-        <label htmlFor="count-input" className="text-xs text-neutral-400 ml-2">Count</label>
-        <input
-          id="count-input"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={countText}
-          onChange={(e) => setCountText(e.target.value)}
-          onBlur={commitCount}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
-          }}
-          className="w-16 bg-neutral-700 rounded px-2 py-1"
-        />
+          {/* Optional single-add */}
+          <button
+            className="px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 whitespace-nowrap"
+            onClick={() => onAddSheets(steel1, 1)}
+            title="Add 1 sheet of Steel 1"
+          >
+            +1
+          </button>
+        </div>
 
-        <div className="flex flex-wrap gap-1 ml-1">
-          <button aria-label={`Add 1 sheet of ${MATERIAL_CATALOG[selectedMat].name}`} className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 1)}>+1</button>
-          <button aria-label={`Add 5 sheets of ${MATERIAL_CATALOG[selectedMat].name}`} className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 5)}>+5</button>
-          <button aria-label={`Add 10 sheets of ${MATERIAL_CATALOG[selectedMat].name}`} className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, 10)}>+10</button>
-          <button aria-label={`Add ${count} sheets of ${MATERIAL_CATALOG[selectedMat].name}`} className="px-2 py-1 rounded bg-neutral-700" onClick={() => onAddSheets(selectedMat, count)}>
-            Add ×{count}
+        {/* Swap button */}
+        <div className="hidden md:flex items-center justify-center">
+          <button
+            className="px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600"
+            onClick={swapSteels}
+            title="Swap Steel 1 and Steel 2"
+          >
+            ⇄
+          </button>
+        </div>
+
+        {/* Steel 2 bubble */}
+        <div className="bg-neutral-800/70 border border-neutral-700 rounded-xl p-3 flex items-center gap-3">
+          <div className="text-xs text-neutral-400 w-14">Steel 2</div>
+          <select
+            className="bg-neutral-900/40 border border-neutral-700 rounded-lg px-3 py-2 w-full outline-none"
+            value={steel2}
+            onChange={(e) => setSteel2(e.target.value as MaterialType)}
+          >
+            {all.map((m) => (
+              <option key={m} value={m}>
+                {MATERIAL_CATALOG[m].name}
+              </option>
+            ))}
+          </select>
+
+          {/* Optional single-add */}
+          <button
+            className="px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 whitespace-nowrap"
+            onClick={() => onAddSheets(steel2, 1)}
+            title="Add 1 sheet of Steel 2"
+          >
+            +1
+          </button>
+        </div>
+
+        {/* Swap button for mobile */}
+        <div className="md:hidden flex justify-center">
+          <button
+            className="px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 w-full"
+            onClick={swapSteels}
+            title="Swap Steel 1 and Steel 2"
+          >
+            Swap steels ⇄
+          </button>
+        </div>
+      </div>
+
+      {/* Pairs + actions */}
+      <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-3 flex flex-col md:flex-row md:items-center gap-2">
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-neutral-400">Pairs</div>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={pairsText}
+            onChange={(e) => setPairsText(e.target.value)}
+            onBlur={commitPairs}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
+            }}
+            className="w-20 bg-neutral-900/40 border border-neutral-700 rounded-lg px-3 py-2 outline-none"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2 md:ml-auto">
+          <button
+            className="px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600"
+            onClick={() => onAddAlternating(steel1, steel2, 1)}
+          >
+            +1 pair
+          </button>
+          <button
+            className="px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600"
+            onClick={() => onAddAlternating(steel1, steel2, 5)}
+          >
+            +5 pairs
+          </button>
+          <button
+            className="px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600"
+            onClick={() => onAddAlternating(steel1, steel2, pairs)}
+          >
+            Add ×{pairs} pairs
           </button>
         </div>
       </div>
@@ -737,27 +832,27 @@ function OperationBubble({ initial, anchor, onConfirm, onClose }: BubbleProps) {
               <Knob
                 label="Twist"
                 value={Math.round(op.turns * 360)}
-                min={0} max={720} step={10} unit="°"
-                onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(2, deg / 360)) } as Operation))}
+                min={0} max={3600} step={10} unit="°"
+                onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(10, deg / 360)) } as Operation))}
               />
               <div className="flex-1">
-                <Slider min={0} max={720} step={1}
+                <Slider min={0} max={3600} step={1}
                   value={Math.round(op.turns * 360)}
-                  onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(2, Number(deg) / 360)) } as Operation))}
+                  onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(10, Number(deg) / 360)) } as Operation))}
                 />
                 <div className="mt-2">
-                  <Num min={0} max={720} step={10}
+                  <Num min={0} max={3600} step={10}
                     value={Math.round(op.turns * 360)}
-                    onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(2, deg / 360)) } as Operation))}
+                    onChange={(deg) => setOp((prev) => ({ ...prev, turns: Math.max(0, Math.min(10, deg / 360)) } as Operation))}
                   /> <span className="ml-1 text-neutral-400">({op.turns.toFixed(2)} turns)</span>
                 </div>
               </div>
             </Row>
             <div className="flex gap-2 flex-wrap">
-              <Preset label="¼ turn" apply={() => setOp((prev) => ({ ...prev, turns: 0.25 } as Operation))} />
-              <Preset label="½ turn" apply={() => setOp((prev) => ({ ...prev, turns: 0.5 } as Operation))} />
               <Preset label="1 turn" apply={() => setOp((prev) => ({ ...prev, turns: 1 } as Operation))} />
               <Preset label="2 turns" apply={() => setOp((prev) => ({ ...prev, turns: 2 } as Operation))} />
+              <Preset label="5 turns" apply={() => setOp((prev) => ({ ...prev, turns: 5 } as Operation))} />
+              <Preset label="10 turns" apply={() => setOp((prev) => ({ ...prev, turns: 10 } as Operation))} />
             </div>
           </>
         )}
@@ -961,10 +1056,23 @@ export default function DamascusPlayground() {
     commit(nl, no)
   }
 
+  const addAlternating = (a: MaterialType, b: MaterialType, pairs: number) => {
+    const nl = [...layers]
+    const no: Operation[] = [...ops]
+
+    for (let i = 0; i < pairs; i++) {
+      nl.push(a, b)
+    }
+
+    // Record steps (keeps instructions readable + matches your current system)
+    no.push({ kind: 'addSheets', material: a, count: pairs })
+    no.push({ kind: 'addSheets', material: b, count: pairs })
+
+    commit(nl, no)
+  }
+
   const quickBase = (pairs = 5) => {
-    const base: MaterialType[] = []
-    for (let i = 0; i < pairs; i++) base.push('1084', '15N20')
-    commit(base, [])
+    addAlternating('1084', '15N20', pairs)
   }
 
   const moveOp = (idx: number, dir: -1 | 1) => {
@@ -1229,7 +1337,7 @@ export default function DamascusPlayground() {
           {/* Steel Stack card */}
           <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl">
             <h2 className="text-xl font-semibold mb-3">Steel Stack</h2>
-            <MaterialPalette onAddSheets={addSheets} />
+            <MaterialPalette onAddSheets={addSheets} onAddAlternating={addAlternating} />
             <div className="mt-3 flex flex-wrap gap-2">
               <button className="px-3 py-2 rounded-lg bg-amber-700" onClick={() => quickBase(5)}>
                 Quick base (5 pairs)
